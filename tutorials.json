@@ -1,0 +1,77 @@
+[
+  {
+    "id": "getting-started",
+    "title": "Getting Started with Git",
+    "description": "Learn the basics of Git version control system",
+    "steps": [
+      {
+        "id": "step-1",
+        "heading": "Installing Git",
+        "explanation": "First, you need to install Git on your system. Visit the official Git website or use your package manager.",
+        "code": "# On macOS with Homebrew\nbrew install git\n\n# On Ubuntu/Debian\nsudo apt-get install git\n\n# On Windows, download from git-scm.com"
+      },
+      {
+        "id": "step-2",
+        "heading": "Configure Git",
+        "explanation": "Set up your identity so your commits are properly attributed to you.",
+        "code": "git config --global user.name \"Your Name\"\ngit config --global user.email \"your.email@example.com\""
+      },
+      {
+        "id": "step-3",
+        "heading": "Initialize a Repository",
+        "explanation": "Create a new Git repository in your project directory.",
+        "code": "cd your-project\ngit init"
+      }
+    ]
+  },
+  {
+    "id": "branching",
+    "title": "Git Branching",
+    "description": "Master the art of branching and merging in Git",
+    "steps": [
+      {
+        "id": "step-1",
+        "heading": "Create a New Branch",
+        "explanation": "Branches allow you to work on different features independently.",
+        "code": "git branch feature-name\n# or create and switch in one command\ngit checkout -b feature-name"
+      },
+      {
+        "id": "step-2",
+        "heading": "Switch Between Branches",
+        "explanation": "Move between different branches to work on various features.",
+        "code": "git checkout main\ngit checkout feature-name\n# or using the newer switch command\ngit switch main"
+      },
+      {
+        "id": "step-3",
+        "heading": "Merge Branches",
+        "explanation": "Combine changes from one branch into another.",
+        "code": "# First, switch to the target branch\ngit checkout main\n# Then merge the feature branch\ngit merge feature-name"
+      }
+    ]
+  },
+  {
+    "id": "github-pages",
+    "title": "Deploy to GitHub Pages",
+    "description": "Host your static website for free using GitHub Pages",
+    "steps": [
+      {
+        "id": "step-1",
+        "heading": "Create a Repository",
+        "explanation": "Create a new repository on GitHub for your website.",
+        "code": "# Create repo on GitHub, then clone it\ngit clone https://github.com/username/repo-name.git\ncd repo-name"
+      },
+      {
+        "id": "step-2",
+        "heading": "Add Your Files",
+        "explanation": "Add your HTML, CSS, and JavaScript files to the repository.",
+        "code": "# Add all files\ngit add .\n# Commit the changes\ngit commit -m \"Initial commit\"\n# Push to GitHub\ngit push origin main"
+      },
+      {
+        "id": "step-3",
+        "heading": "Enable GitHub Pages",
+        "explanation": "Go to your repository settings, navigate to 'Pages' section, and select your branch as the source. Your site will be live at username.github.io/repo-name.",
+        "code": "# No code needed - this is done in GitHub UI\n# Settings > Pages > Source > Deploy from branch\n# Select 'main' branch and '/ (root)' folder"
+      }
+    ]
+  }
+]
