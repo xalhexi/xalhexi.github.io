@@ -1,9 +1,7 @@
 "use client";
 
-import React from "react"
-import { Minus } from "lucide-react"; // Import Minus here
-
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Minus } from "lucide-react";
 import {
   Search,
   Copy,
@@ -36,6 +34,7 @@ import {
   Monitor,
   Maximize2,
   Minimize2,
+  RefreshCw,
 } from "lucide-react";
 
 interface StepImage {
@@ -186,13 +185,277 @@ const defaultTutorials: Tutorial[] = [
         id: "3-1",
         heading: "Basic SSH Command",
         explanation: "Connect to the server using your credentials.",
-        code: "ssh it21_lastname@172.17.100.15 -p 9889",
+        code: "ssh it21_lastname@172.17.100.15 -p 9898",
       },
       {
         id: "3-2",
         heading: "First Time Setup",
         explanation: "Accept the fingerprint when prompted.",
         code: "# Type 'yes' when asked about authenticity",
+      },
+    ],
+  },
+  {
+    id: "4",
+    title: "SSH + GitHub SSH Setup (ed25519)",
+    description: "Complete guide to SSH into server, generate ed25519 keys, configure GitHub SSH with Port 443, and set up Git",
+    steps: [
+      {
+        id: "4-1",
+        heading: "Connect to the Server",
+        explanation: "Open Terminal and SSH into your school server. When prompted, type 'yes' if asked to continue connecting, then enter your password.",
+        code: "ssh it21_lastname@172.17.100.15 -p 9898",
+      },
+      {
+        id: "4-2",
+        heading: "Switch to Bash (Optional)",
+        explanation: "Switch to bash shell for better compatibility. This step is optional but recommended.",
+        code: "bash",
+      },
+      {
+        id: "4-3",
+        heading: "Create .ssh Folder",
+        explanation: "Create the .ssh directory if it doesn't exist and navigate into it. You can verify your location with pwd.",
+        code: "mkdir -p ~/.ssh\ncd ~/.ssh\n\n# Optional: verify directory\npwd",
+      },
+      {
+        id: "4-4",
+        heading: "Generate SSH Key (ed25519)",
+        explanation: "Generate a new SSH key using the ed25519 algorithm. Press Enter for default file location, and Enter again for no passphrase (or set one if you prefer).",
+        code: 'ssh-keygen -t ed25519 -C "your_email@example.com"',
+      },
+      {
+        id: "4-5",
+        heading: "Show and Copy Public Key",
+        explanation: "Display your public key and copy the entire output (starts with 'ssh-ed25519'). You'll need this for GitHub.",
+        code: "cat ~/.ssh/id_ed25519.pub",
+      },
+      {
+        id: "4-6",
+        heading: "Add Public Key to GitHub",
+        explanation: "On GitHub: Go to Settings > SSH and GPG keys > New SSH key. Give it a title like 'School Server Key', paste your public key, and click 'Add SSH key'.",
+        code: "# No terminal command needed\n# 1. Go to GitHub Settings\n# 2. Click 'SSH and GPG keys'\n# 3. Click 'New SSH key'\n# 4. Title: School Server Key\n# 5. Paste your public key\n# 6. Click 'Add SSH key'",
+      },
+      {
+        id: "4-7",
+        heading: "Configure SSH for Port 443",
+        explanation: "Create/edit the SSH config file to force GitHub SSH connections through Port 443. This bypasses firewall restrictions. Use Ctrl+O then Enter to save, and Ctrl+X to exit nano.",
+        code: "nano ~/.ssh/config\n\n# Paste this content:\nHost github.com\n  HostName ssh.github.com\n  User git\n  Port 443\n  IdentityFile ~/.ssh/id_ed25519",
+      },
+      {
+        id: "4-8",
+        heading: "Fix SSH Permissions",
+        explanation: "Set the correct permissions for your SSH files. This is important for security and proper SSH operation.",
+        code: "chmod 700 ~/.ssh\nchmod 600 ~/.ssh/config\nchmod 600 ~/.ssh/id_ed25519\nchmod 644 ~/.ssh/id_ed25519.pub",
+      },
+      {
+        id: "4-9",
+        heading: "Set Git Global Config",
+        explanation: "Configure Git with your name and email so your commits are properly attributed. Optionally set 'main' as your default branch.",
+        code: 'git config --global user.name "Your Full Name"\ngit config --global user.email "your_email@example.com"\n\n# Optional: set default branch to main\ngit config --global init.defaultBranch main\n\n# Optional: verify your config\ngit config --global --list',
+      },
+      {
+        id: "4-10",
+        heading: "Verify GitHub SSH Connection",
+        explanation: "Test your SSH connection to GitHub. If successful, you'll see a message like 'Hi USERNAME! You've successfully authenticated...' Type 'yes' if asked to trust the host.",
+        code: "ssh -T git@github.com",
+      },
+      {
+        id: "4-11",
+        heading: "Return Home and Exit",
+        explanation: "Navigate back to your home directory and exit the server when you're done. Remember: never share your private key (id_ed25519), only share the public key (id_ed25519.pub).",
+        code: "cd ~\npwd  # Optional: confirm location\n\n# When done, exit the server\nexit",
+      },
+    ],
+  },
+  {
+    id: "5",
+    title: "Git Basics: Create Repo & Push",
+    description: "Create a new repository, add files, commit changes, and push to GitHub",
+    steps: [
+      {
+        id: "5-1",
+        heading: "Create Project Folder",
+        explanation: "Create a project folder and navigate into it. Use pwd to verify your location.",
+        code: "mkdir my-project\ncd my-project\n\n# Optional: check where you are\npwd",
+      },
+      {
+        id: "5-2",
+        heading: "Initialize Git Repository",
+        explanation: "Initialize Git in the folder and set the branch to 'main' (recommended).",
+        code: "git init\n\n# Set branch to main\ngit branch -M main",
+      },
+      {
+        id: "5-3",
+        heading: "Create Files",
+        explanation: "Create a README file using nano. Save with Ctrl+O then Enter, exit with Ctrl+X. You can also create files quickly with echo.",
+        code: "# Create README with nano\nnano README.md\n\n# Or create file quickly\necho \"Hello world\" > hello.txt\n\n# Check your files\nls",
+      },
+      {
+        id: "5-4",
+        heading: "Check Status & Stage Files",
+        explanation: "Check Git status to see untracked files, then add them to staging area.",
+        code: "git status\n\n# Add all files\ngit add .\n\n# Or add specific file\ngit add README.md\n\n# Check status again\ngit status",
+      },
+      {
+        id: "5-5",
+        heading: "Commit Changes",
+        explanation: "Commit your staged changes with a descriptive message.",
+        code: "git commit -m \"Initial commit\"",
+      },
+      {
+        id: "5-6",
+        heading: "Create GitHub Repo & Connect",
+        explanation: "On GitHub: Click 'New repository', name it, do NOT initialize with README. Copy the SSH link and connect your local repo.",
+        code: "# Add remote (replace USERNAME and my-project)\ngit remote add origin git@github.com:USERNAME/my-project.git\n\n# Verify remote\ngit remote -v",
+      },
+      {
+        id: "5-7",
+        heading: "Push to GitHub",
+        explanation: "Push your commits to GitHub. The -u flag sets upstream, so future pushes only need 'git push'.",
+        code: "git push -u origin main\n\n# Future pushes:\ngit push",
+      },
+      {
+        id: "5-8",
+        heading: "Normal Workflow",
+        explanation: "After initial setup, use this workflow when you make changes: status, add, commit, push.",
+        code: "git status\ngit add .\ngit commit -m \"Describe what you changed\"\ngit push",
+      },
+    ],
+  },
+  {
+    id: "6",
+    title: "Clone Existing Repo from GitHub",
+    description: "How to clone an existing repository and start working on it",
+    steps: [
+      {
+        id: "6-1",
+        heading: "Navigate to Projects Folder",
+        explanation: "Go to the folder where you want the repo to be downloaded. Create a projects folder if needed.",
+        code: "# Go to home directory\ncd ~\n\n# Or create a projects folder\nmkdir -p ~/projects\ncd ~/projects",
+      },
+      {
+        id: "6-2",
+        heading: "Clone the Repository",
+        explanation: "Copy the SSH link from GitHub and clone the repo. This creates a folder with the repo name.",
+        code: "# Clone using SSH (recommended)\ngit clone git@github.com:USERNAME/REPO_NAME.git\n\n# Example:\ngit clone git@github.com:octocat/Hello-World.git",
+      },
+      {
+        id: "6-3",
+        heading: "Enter & Verify",
+        explanation: "Enter the cloned repo folder and verify the remote and branch.",
+        code: "cd REPO_NAME\n\n# Check remote\ngit remote -v\n\n# Check branch\ngit branch",
+      },
+      {
+        id: "6-4",
+        heading: "Make Changes & Push",
+        explanation: "Create or edit files, then stage, commit, and push your changes.",
+        code: "# Create/edit a file\nnano notes.txt\n\n# Stage, commit, push\ngit add .\ngit commit -m \"Add notes\"\ngit push",
+      },
+      {
+        id: "6-5",
+        heading: "Useful Commands",
+        explanation: "Handy commands for checking history, changes, and syncing with remote.",
+        code: "# Check commit history\ngit log --oneline\n\n# See file changes\ngit diff\n\n# Pull latest updates\ngit pull\n\n# Check current branch\ngit branch",
+      },
+    ],
+  },
+  {
+    id: "7",
+    title: "Ubuntu: Rename & Move Files",
+    description: "How to rename files and move them between folders in Ubuntu",
+    steps: [
+      {
+        id: "7-1",
+        heading: "Rename a File",
+        explanation: "Use mv command to rename files. Same syntax works for folders.",
+        code: "# Rename a file\nmv oldname.txt newname.txt\n\n# Example\nmv notes.txt notes-final.txt\n\n# Rename a folder\nmv oldfolder newfolder",
+      },
+      {
+        id: "7-2",
+        heading: "Move File to Parent Folder",
+        explanation: "Use ../ to reference the parent folder. Move files one level up with mv.",
+        code: "# Move file one level up\nmv file.txt ../\n\n# Move folder one level up\nmv myfolder ../\n\n# Move multiple files up\nmv a.txt b.txt c.txt ../",
+      },
+      {
+        id: "7-3",
+        heading: "Move Multiple Levels Up",
+        explanation: "Use multiple ../ to go up several levels. Each ../ goes up one folder.",
+        code: "# ../ = up 1 folder\n# ../../ = up 2 folders\n# ../../../ = up 3 folders\n\n# Move file up 2 levels\nmv file.txt ../../",
+      },
+      {
+        id: "7-4",
+        heading: "Move File Into Another Folder",
+        explanation: "Move a file into a subfolder by specifying the folder name.",
+        code: "mv file.txt foldername/\n\n# Example\nmv hello.txt src/",
+      },
+      {
+        id: "7-5",
+        heading: "Check Location & List Files",
+        explanation: "Helpful commands to see where you are and what files exist.",
+        code: "# Print working directory\npwd\n\n# List files\nls\n\n# List all files with details\nls -la",
+      },
+    ],
+  },
+  {
+    id: "8",
+    title: "Check GitHub Repo Contributors",
+    description: "Three ways to check contributors of a GitHub repository",
+    steps: [
+      {
+        id: "8-1",
+        heading: "GitHub Web (Easiest)",
+        explanation: "The simplest way - use the GitHub website to view contributors.",
+        code: "# No terminal needed\n# On the repo page:\n# 1. Click 'Insights' tab\n# 2. Click 'Contributors' in sidebar",
+      },
+      {
+        id: "8-2",
+        heading: "Using Git Log",
+        explanation: "Use git shortlog to see contributors and their commit counts. Works without GitHub CLI.",
+        code: "# Inside the repo folder:\ngit shortlog -s -n\n\n# -s = show commit counts only\n# -n = sort by number of commits\n\n# Show names + emails:\ngit shortlog -sne",
+      },
+      {
+        id: "8-3",
+        heading: "Install GitHub CLI",
+        explanation: "Install the GitHub CLI (gh) if not already installed, then login.",
+        code: "# Check if installed\ngh --version\n\n# Install on Ubuntu\nsudo apt update\nsudo apt install gh -y\n\n# Login to GitHub\ngh auth login",
+      },
+      {
+        id: "8-4",
+        heading: "Using GitHub CLI",
+        explanation: "Use gh api to fetch contributor data. Works for public repos or repos you have access to.",
+        code: "# Get contributors\ngh api repos/OWNER/REPO/contributors\n\n# Show only usernames\ngh api repos/OWNER/REPO/contributors --jq '.[].login'\n\n# Show username + contributions\ngh api repos/OWNER/REPO/contributors --jq '.[] | \"\\(.login) - \\(.contributions)\"'",
+      },
+      {
+        id: "8-5",
+        heading: "Quick Tip for Screenshots",
+        explanation: "If you need screenshot proof for a teacher, this command clearly shows contributors with commit counts.",
+        code: "git shortlog -sne",
+      },
+    ],
+  },
+  {
+    id: "9",
+    title: "Common Git Errors & Fixes",
+    description: "Quick fixes for common Git errors you might encounter",
+    steps: [
+      {
+        id: "9-1",
+        heading: "Permission Denied (publickey)",
+        explanation: "This error means your SSH key is not set up or not added to GitHub.",
+        code: "# Test SSH connection\nssh -T git@github.com\n\n# If it fails, check your SSH key setup\n# Refer to the SSH + GitHub Setup tutorial",
+      },
+      {
+        id: "9-2",
+        heading: "Remote Origin Already Exists",
+        explanation: "Remove the existing remote and add it again with the correct URL.",
+        code: "# Remove existing remote\ngit remote remove origin\n\n# Add new remote\ngit remote add origin git@github.com:USERNAME/REPO_NAME.git",
+      },
+      {
+        id: "9-3",
+        heading: "Branch is Master Instead of Main",
+        explanation: "Rename your local branch to main and push to the main branch.",
+        code: "# Rename branch to main\ngit branch -M main\n\n# Push to main\ngit push -u origin main",
       },
     ],
   },
@@ -958,7 +1221,16 @@ export default function ITPTutorial() {
   const [terminalSettingsOpen, setTerminalSettingsOpen] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   const [terminalFullscreen, setTerminalFullscreen] = useState(false);
+  const [terminalLocked, setTerminalLocked] = useState(true); // Terminal is locked by default
   const [draggedTutorial, setDraggedTutorial] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(288); // 18rem = 288px default
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const MIN_SIDEBAR_WIDTH = 200;
+  const MAX_SIDEBAR_WIDTH = 450;
+  const [githubSyncUrl, setGithubSyncUrl] = useState("https://raw.githubusercontent.com/xalhexi/xalhexi.com/main/tutorials.json");
+  const [showSyncSettings, setShowSyncSettings] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -966,13 +1238,23 @@ export default function ITPTutorial() {
       const saved = localStorage.getItem("tutorialsOverride");
       if (saved) {
         try {
-          setTutorials(JSON.parse(saved));
+          const savedTutorials = JSON.parse(saved) as Tutorial[];
+          // Merge: keep saved tutorials, add any new defaults that don't exist
+          const savedIds = new Set(savedTutorials.map((t) => t.id));
+          const newDefaults = defaultTutorials.filter((t) => !savedIds.has(t.id));
+          if (newDefaults.length > 0) {
+            setTutorials([...savedTutorials, ...newDefaults]);
+          } else {
+            setTutorials(savedTutorials);
+          }
         } catch {
           // ignore
         }
       }
       const savedTerminalUrl = localStorage.getItem("terminalUrl");
       if (savedTerminalUrl) setTerminalUrl(savedTerminalUrl);
+      const savedTerminalLocked = localStorage.getItem("terminalLocked");
+      if (savedTerminalLocked !== null) setTerminalLocked(savedTerminalLocked === "true");
     }
   }, []);
 
@@ -987,6 +1269,46 @@ export default function ITPTutorial() {
       localStorage.setItem("terminalUrl", terminalUrl);
     }
   }, [terminalUrl]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("terminalLocked", String(terminalLocked));
+    }
+  }, [terminalLocked]);
+
+  // Sidebar resize handlers
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = e.clientX;
+      if (newWidth >= MIN_SIDEBAR_WIDTH && newWidth <= MAX_SIDEBAR_WIDTH) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing]);
 
   const handleDragStart = (tutorialId: string) => {
     setDraggedTutorial(tutorialId);
@@ -1228,6 +1550,41 @@ const deleteTutorial = (id: string) => {
     input.click();
   };
 
+  // Sync from GitHub
+  const syncFromGithub = async () => {
+    if (!githubSyncUrl) {
+      showToast("No GitHub URL configured");
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      "This will replace all your local tutorials with the version from GitHub.\n\nAre you sure? Any unsaved local changes will be lost."
+    );
+    
+    if (!confirmed) return;
+    
+    setIsSyncing(true);
+    try {
+      const response = await fetch(githubSyncUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0 && data[0].id && data[0].title) {
+        setTutorials(data);
+        setSelectedTutorial(data[0].id);
+        showToast("Synced from GitHub!");
+      } else {
+        showToast("Invalid JSON format");
+      }
+    } catch (error) {
+      showToast("Failed to sync from GitHub");
+      console.error("Sync error:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3]">
       {/* Header */}
@@ -1260,7 +1617,8 @@ const deleteTutorial = (id: string) => {
           </div>
 
           <div className="flex items-center gap-2">
-  {terminalUrl && (
+  {/* Terminal button - only show if URL is configured AND (admin OR unlocked) */}
+  {terminalUrl && (isAdmin || !terminalLocked) && (
     <button
       onClick={() => setShowTerminal(true)}
       className="p-2 hover:bg-[#21262d] rounded-md transition-colors"
@@ -1270,7 +1628,7 @@ const deleteTutorial = (id: string) => {
     </button>
   )}
   <a
-  href="https://github.com"
+  href="https://github.com/xalhexi-sch"
   target="_blank"
   rel="noopener noreferrer"
   className="p-2 hover:bg-[#21262d] rounded-md transition-colors"
@@ -1325,10 +1683,19 @@ const deleteTutorial = (id: string) => {
       <div className="flex">
         {/* Left Sidebar - Tutorial List */}
         <aside
-          className={`fixed lg:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] w-72 bg-[#161b22] border-r border-[#30363d] overflow-y-auto transition-transform lg:translate-x-0 ${
+          ref={sidebarRef}
+          style={{ width: sidebarWidth }}
+          className={`fixed lg:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] bg-[#161b22] border-r border-[#30363d] overflow-y-auto transition-transform lg:translate-x-0 shrink-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
+          {/* Resize handle */}
+          <div
+            onMouseDown={startResizing}
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#58a6ff] transition-colors z-50 ${
+              isResizing ? "bg-[#58a6ff]" : "bg-transparent"
+            }`}
+          />
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-[#8b949e] uppercase tracking-wide">
@@ -1395,7 +1762,7 @@ const deleteTutorial = (id: string) => {
                         selectedTutorial === tutorial.id ? "rotate-90 text-[#58a6ff]" : ""
                       }`}
                     />
-                    <span className="truncate">{tutorial.title}</span>
+                    <span className="truncate" title={tutorial.title}>{tutorial.title}</span>
                   </button>
                 </div>
               ))}
@@ -1409,30 +1776,63 @@ const deleteTutorial = (id: string) => {
           {/* Sidebar footer */}
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#30363d] bg-[#161b22]">
             {isAdmin && (
-              <div className="flex gap-2 mb-3">
-                <button
-                  onClick={exportTutorials}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#238636] hover:bg-[#2ea043] text-white rounded-md transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Export
-                </button>
-                <button
-                  onClick={importTutorials}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-md transition-colors"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Import
-                </button>
-              </div>
+              <>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={exportTutorials}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#238636] hover:bg-[#2ea043] text-white rounded-md transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Export
+                  </button>
+                  <button
+                    onClick={importTutorials}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-md transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Import
+                  </button>
+                </div>
+                <div className="mb-3">
+                  <button
+                    onClick={syncFromGithub}
+                    disabled={isSyncing}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] rounded-md transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+                    {isSyncing ? "Syncing..." : "Sync from GitHub"}
+                  </button>
+                  <button
+                    onClick={() => setShowSyncSettings(!showSyncSettings)}
+                    className="w-full mt-1 text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors"
+                  >
+                    {showSyncSettings ? "Hide URL settings" : "Edit GitHub URL"}
+                  </button>
+                  {showSyncSettings && (
+                    <input
+                      type="text"
+                      value={githubSyncUrl}
+                      onChange={(e) => setGithubSyncUrl(e.target.value)}
+                      placeholder="GitHub raw JSON URL"
+                      className="w-full mt-2 px-2 py-1.5 text-xs bg-[#0d1117] border border-[#30363d] rounded-md text-[#c9d1d9] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff]"
+                    />
+                  )}
+                </div>
+              </>
             )}
-            <button
-              onClick={() => setShowTerminal(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#58a6ff] hover:bg-[#21262d] transition-colors"
-            >
-              <Terminal className="w-4 h-4" />
-              <span>Terminal</span>
-            </button>
+            {/* Terminal button - only show if admin OR unlocked */}
+            {(isAdmin || !terminalLocked) && (
+              <button
+                onClick={() => setShowTerminal(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#58a6ff] hover:bg-[#21262d] transition-colors"
+              >
+                <Terminal className="w-4 h-4" />
+                <span>Terminal</span>
+                {terminalLocked && isAdmin && (
+                  <Lock className="w-3 h-3 text-[#f0883e] ml-auto" />
+                )}
+              </button>
+            )}
             <a
               href="https://github.com/xalhexi-sch"
               target="_blank"
@@ -1454,11 +1854,11 @@ const deleteTutorial = (id: string) => {
         )}
 
         {/* Main Content + Terminal Split */}
-        <div className={`flex-1 min-w-0 flex ${showTerminal && !terminalFullscreen ? 'gap-0' : ''}`}>
-          <main className={`${showTerminal && !terminalFullscreen ? 'w-1/2' : 'flex-1'} min-w-0 p-4 lg:p-6 overflow-y-auto`}>
+        <div className={`flex-1 min-w-0 flex ${showTerminal && !terminalFullscreen && (isAdmin || !terminalLocked) ? '' : 'justify-center'}`}>
+          <main className={`${showTerminal && !terminalFullscreen && (isAdmin || !terminalLocked) ? 'w-1/2' : 'w-full max-w-4xl'} min-w-0 p-4 lg:p-6 overflow-y-auto`}>
           {isSearching ? (
             /* Search Results View */
-            <div className="max-w-3xl mx-auto">
+            <div className={`${showTerminal && !terminalFullscreen && (isAdmin || !terminalLocked) ? '' : 'max-w-3xl mx-auto'}`}>
               <div className="mb-6">
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <h1 className="text-xl font-bold text-[#e6edf3]">
@@ -1485,11 +1885,11 @@ const deleteTutorial = (id: string) => {
                     >
                       {/* Result header with tutorial name */}
                       <div className="px-4 py-2 border-b border-[#30363d] bg-[#21262d] flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-[#8b949e]">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          <span>{result.tutorialTitle}</span>
-                          <span className="text-[#484f58]">/</span>
-                          <span className="text-[#58a6ff]">{result.step.heading}</span>
+                        <div className="flex items-center gap-2 text-xs text-[#8b949e] min-w-0 flex-1">
+                          <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[120px]" title={result.tutorialTitle}>{result.tutorialTitle}</span>
+                          <span className="text-[#484f58] shrink-0">/</span>
+                          <span className="text-[#58a6ff] truncate" title={result.step.heading}>{result.step.heading}</span>
                         </div>
                         <button
                           onClick={() => clearSearchAndGoToTutorial(result.tutorialId)}
@@ -1520,11 +1920,11 @@ const deleteTutorial = (id: string) => {
             </div>
           ) : currentTutorial ? (
             /* Normal Tutorial View */
-            <div className="max-w-3xl mx-auto">
+            <div className={`${showTerminal && !terminalFullscreen && (isAdmin || !terminalLocked) ? '' : 'max-w-3xl mx-auto'}`}>
               {/* Tutorial header */}
               <div className="mb-6">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <h1 className="text-2xl font-bold text-[#e6edf3]">{currentTutorial.title}</h1>
+                  <h1 className="text-2xl font-bold text-[#e6edf3] truncate" title={currentTutorial.title}>{currentTutorial.title}</h1>
                   {isAdmin && (
                     <div className="flex items-center gap-1 shrink-0">
                       <button
@@ -1662,8 +2062,8 @@ const deleteTutorial = (id: string) => {
           )}
         </main>
 
-          {/* Terminal Panel - Split Screen Right Side */}
-          {showTerminal && !terminalFullscreen && (
+          {/* Terminal Panel - Split Screen Right Side (only show if admin OR unlocked) */}
+          {showTerminal && !terminalFullscreen && (isAdmin || !terminalLocked) && (
             <div className="w-1/2 border-l border-[#30363d] flex flex-col bg-[#0d1117]">
               {/* Terminal Header */}
               <div className="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-[#30363d]">
@@ -1735,13 +2135,13 @@ const deleteTutorial = (id: string) => {
                 <div>
                   <p className="text-xs text-[#8b949e] mb-1.5">Connect to server:</p>
                   <CopyableCommand
-                    command="ssh it21_lastname@172.17.100.15 -p 9889"
+                    command="ssh it21_lastname@172.17.100.15 -p 9898"
                     onCopy={handleCopy}
                   />
                 </div>
                 <div className="flex items-center gap-2 text-xs text-[#8b949e]">
                   <Server className="w-3.5 h-3.5" />
-                  <span>Port: 9889</span>
+                  <span>Port: 9898</span>
                 </div>
               </div>
             </div>
@@ -1827,6 +2227,52 @@ const deleteTutorial = (id: string) => {
                 />
                 <p className="text-xs text-[#484f58] mt-1">Enter the URL where ttyd is running on your VPS</p>
               </div>
+              
+              {/* Lock/Unlock Toggle */}
+              <div className="flex items-center justify-between gap-4 p-3 bg-[#0d1117] border border-[#30363d] rounded-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  {terminalLocked ? (
+                    <Lock className="w-5 h-5 text-[#f0883e] shrink-0" />
+                  ) : (
+                    <Unlock className="w-5 h-5 text-[#3fb950] shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#e6edf3]">
+                      {terminalLocked ? "Terminal Locked" : "Terminal Unlocked"}
+                    </p>
+                    <p className="text-xs text-[#484f58]">
+                      {terminalLocked 
+                        ? "Only admins can access" 
+                        : "All users can access"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTerminalLocked(!terminalLocked);
+                    showToast(terminalLocked ? "Terminal unlocked" : "Terminal locked");
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 shrink-0 cursor-pointer ${
+                    terminalLocked
+                      ? "bg-[#238636] hover:bg-[#2ea043] text-white"
+                      : "bg-[#da3633] hover:bg-[#f85149] text-white"
+                  }`}
+                >
+                  {terminalLocked ? (
+                    <>
+                      <Unlock className="w-4 h-4" />
+                      Unlock
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Lock
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -1854,8 +2300,8 @@ const deleteTutorial = (id: string) => {
         </div>
       )}
 
-      {/* Terminal Fullscreen View */}
-      {showTerminal && terminalFullscreen && (
+      {/* Terminal Fullscreen View (only show if admin OR unlocked) */}
+      {showTerminal && terminalFullscreen && (isAdmin || !terminalLocked) && (
         <div className="fixed inset-0 z-50 flex flex-col bg-[#0d1117]">
           {/* Fullscreen Terminal Header */}
           <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-[#30363d]">
